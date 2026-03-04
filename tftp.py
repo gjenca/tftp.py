@@ -4,6 +4,35 @@ import socket
 import struct
 import sys
 
+OPCODE_READ=1
+OPCODE_WRITE=2
+OPCODE_DATA=3
+OPCODE_ACK=4
+OPCODE_ERROR=5
+
+
+class Rrq:
+
+    def __init__(self,addr,data):
+
+        self.addr=addr
+        if len(data)<9:
+            raise ValueError(f'Too short packet from {addr}')
+        self.opcode=struct.unpack('!H',data[:2])[0]
+        if self.opcode!=OPCODE_READ:
+            raise ValueError(f'Not RRQ from {addr}, opcode={self.opcode}')
+        nulls_num=self.data[2:].count(b'\x00')
+        if nulls_num!=2:
+            raise ValueError(f'Not two nulls {addr}')
+        filename_b,mode_b,null_b=data[2:].split(b'\x00')
+        if null_b:
+            raise ValueError(f'Something follows the second null {addr}')
+        if mode_b!=b'octet'
+            raise ValueError(f'Unsupported mode {mode_b}')
+        self.filename=filename_b
+        self.mode=mode_b
+
+
 s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 s.bind(('',9999))
 data,addr=s.recvfrom(1024)
